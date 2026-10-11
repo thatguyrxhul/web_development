@@ -1,0 +1,63 @@
+{% extends 'accounts/base.html' %}
+{% block title %}{{ task.title }}{% endblock %}
+{% block content %}
+<div class="row between">
+  <div>
+    <h1>{{ task.title }}</h1>
+    <p class="muted">Project: <a href="{% url 'project_detail' task.project.pk %}">{{ task.project.name }}</a>
+      · Assigned to: {{ task.assignee.email|default:'Unassigned' }}
+      · Deadline: {{ task.deadline|date:'M d, Y'|default:'None' }}</p>
+    <p style="margin-top:8px">
+      <span class="badge b-{{ task.status }}">{{ task.get_status_display }}</span>
+      <span class="badge b-{{ task.priority }}">{{ task.get_priority_display }}</span>
+      {% for l in task.labels.all %}<span class="badge b-MEDIUM" style="margin-left:4px">{{ l.name }}</span>{% endfor %}
+    </p>
+  </div>
+  {% if user == task.project.manager or user.role == 'ADMIN' %}
+    <a class="btn btn-secondary" href="{% url 'task_edit' task.pk %}">Edit Task</a>
+  {% endif %}
+</div>
+
+<div class="card"><p>{{ task.description|default:'No description.' }}</p></div>
+
+{% if can_edit %}
+<div class="card">
+  <h3>Move to next stage</h3>
+  <div class="row" style="margin-top:8px">
+    <form method="post" action="{% url 'task_status' task.pk %}">{% csrf_token %}
+      {% if task.status == 'TODO' %}<button class="btn btn-green" name="status" value="IN_PROGRESS">Start Work</button>{% endif %}
+      {% if task.status == 'IN_PROGRESS' %}<button class="btn" name="status" value="IN_REVIEW">Send to Review</button>{% endif %}
+      {% if task.status == 'IN_REVIEW' %}<button class="btn btn-green" name="status" value="COMPLETED">Approve & Complete</button>{% endif %}
+      {% if task.status == 'COMPLETED' %}<span class="muted">Task is completed.</span>{% endif %}
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="grid grid-2">
+  <div class="card">
+    <h3>Comments</h3>
+    {% for c in comments %}
+      <div class="log"><span class="time">{{ c.created_at|date:'M d, H:i' }}</span>
+        <span><strong>{{ c.author.email }}</strong><br>{{ c.body }}</span></div>
+    {% empty %}<p class="muted">No comments yet.</p>{% endfor %}
+    <form method="post" action="{% url 'comment_add' task.pk %}" class="stack" style="margin-top:10px">
+      {% csrf_token %}
+      <textarea name="body" placeholder="Add a comment..." required></textarea>
+      <button class="btn btn-sm" style="margin-top:8px">Post Comment</button>
+    </form>
+  </div>
+  <div class="card">
+    <h3>Attachments</h3>
+    {% for a in attachments %}
+      <div class="log"><a href="{% url 'attachment_download' a.pk %}">{{ a.file.name }}</a>
+        <span class="time">{{ a.uploaded_by.email }} · {{ a.uploaded_at|date:'M d' }}</span></div>
+    {% empty %}<p class="muted">No attachments yet.</p>{% endfor %}
+    <form method="post" action="{% url 'attachment_upload' task.pk %}" enctype="multipart/form-data" class="stack" style="margin-top:10px">
+      {% csrf_token %}
+      <input type="file" name="file" required>
+      <button class="btn btn-sm" style="margin-top:8px">Upload</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

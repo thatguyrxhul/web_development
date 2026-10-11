@@ -1,0 +1,15 @@
+{% extends 'accounts/base.html' %}
+{% block title %}Activity{% endblock %}
+{% block content %}
+<h1>Activity — {{ project.name }}</h1>
+<div class="card" style="margin-top:16px">
+  {% for log in logs %}
+    <div class="log">
+      <span class="time">{{ log.timestamp|date:'M d, H:i' }}</span>
+      <span><strong>{{ log.actor.email|default:'System' }}</strong> — {{ log.description }}
+        {% if log.old_value %}<span class="badge b-{{ log.old_value }}">{{ log.old_value }}</span> → <span class="badge b-{{ log.new_value }}">{{ log.new_value }}</span>{% endif %}
+      </span>
+    </div>
+  {% empty %}<p class="muted">No activity recorded yet.</p>{% endfor %}
+</div>
+{% endblock %}

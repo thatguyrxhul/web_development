@@ -1,0 +1,57 @@
+{% extends 'accounts/base.html' %}
+{% block title %}Kanban — {{ project.name }}{% endblock %}
+{% block content %}
+<div class="row between">
+  <h1>{{ project.name }} — Kanban</h1>
+  <div class="row">
+    <a class="btn btn-secondary" href="{% url 'project_detail' project.pk %}">Project</a>
+    {% if user == project.manager or user.role == 'ADMIN' %}
+      <a class="btn" href="{% url 'task_create' project.pk %}">+ New Task</a>
+    {% endif %}
+  </div>
+</div>
+<p class="muted">Drag a card to the next column to change its status (TODO → In Progress → In Review → Completed).</p>
+
+<div class="board" style="margin-top:14px">
+{% for status, label, tasks in columns %}
+    <div class="col" data-status="{{ status }}">
+    <h4>{{ label }} <span>{{ tasks|length }}</span></h4>
+    {% for t in tasks %}
+    <div class="kanban-card" draggable="true" data-task-id="{{ t.pk }}" data-url="{% url 'task_status' t.pk %}">
+      <div class="t"><a href="{% url 'task_detail' t.pk %}">{{ t.title }}</a></div>
+      <span class="badge b-{{ t.priority }}">{{ t.get_priority_display }}</span>
+      <span class="muted" style="font-size:11px">{{ t.assignee.email|default:'unassigned' }}</span>
+    </div>
+    {% empty %}<p class="muted" style="font-size:12px">No tasks</p>{% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const csrf = '{{ csrf_token }}';
+let dragged = null;
+document.querySelectorAll('.kanban-card').forEach(card => {
+  card.addEventListener('dragstart', e => { dragged = card; e.dataTransfer.setData('text/plain', card.dataset.taskId); });
+});
+document.querySelectorAll('.col').forEach(col => {
+  col.addEventListener('dragover', e => e.preventDefault());
+  col.addEventListener('drop', e => {
+    e.preventDefault();
+    if (!dragged) return;
+    const fd = new FormData();
+    fd.append('status', col.dataset.status);
+    fetch(dragged.dataset.url, {
+      method: 'POST',
+      headers: {'X-CSRFToken': csrf, 'X-Requested-With': 'XMLHttpRequest'},
+      body: fd
+    }).then(r => {
+      if (r.ok) location.reload();
+      else r.json().then(d => alert(d.error || 'Invalid transition'));
+    });
+    dragged = null;
+  });
+});
+</script>
+{% endblock %}

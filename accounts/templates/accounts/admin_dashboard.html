@@ -1,0 +1,18 @@
+{% extends 'accounts/base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<h1>Platform Statistics</h1>
+<div class="stats" style="margin:16px 0">
+  <div class="stat"><div class="num">{{ total_users }}</div><div class="lbl">Users</div></div>
+  <div class="stat"><div class="num">{{ total_projects }}</div><div class="lbl">Projects</div></div>
+  <div class="stat"><div class="num">{{ total_tasks }}</div><div class="lbl">Tasks</div></div>
+  <div class="stat"><div class="num">{{ completed_tasks }}</div><div class="lbl">Completed</div></div>
+</div>
+<div class="card">
+  <h3>Recent Activity</h3>
+  {% for log in recent_activity %}
+    <div class="log"><span class="time">{{ log.timestamp|date:'M d, H:i' }}</span>
+      <span><strong>{{ log.actor.email|default:'System' }}</strong> — {{ log.description }}</span></div>
+  {% empty %}<p class="muted">No activity yet.</p>{% endfor %}
+</div>
+{% endblock %}

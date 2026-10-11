@@ -1,0 +1,41 @@
+{% extends 'accounts/base.html' %}
+{% block title %}{% if task %}Edit{% else %}New{% endif %} Task{% endblock %}
+{% block content %}
+<div class="card" style="max-width:680px">
+  <h1>{% if task %}Edit Task{% else %}New Task{% endif %}</h1>
+  <p class="muted">Project: {% if task %}{{ task.project.name }}{% else %}{{ project.name }}{% endif %}</p>
+  <form method="post" class="stack">
+    {% csrf_token %}
+    <label>Title</label>
+    <input name="title" value="{{ task.title|default:'' }}" required>
+    <label>Description</label>
+    <textarea name="description">{{ task.description|default:'' }}</textarea>
+    <div class="grid grid-2">
+      <div><label>Assign to (project members only)</label>
+        <select name="assignee">
+          <option value="">— unassigned —</option>
+          {% for m in members %}
+            <option value="{{ m.user.pk }}" {% if task.assignee == m.user %}selected{% endif %}>{{ m.user.email }}</option>
+          {% endfor %}
+        </select></div>
+      <div><label>Priority</label>
+        <select name="priority">
+          <option value="LOW" {% if task.priority == 'LOW' %}selected{% endif %}>Low</option>
+          <option value="MEDIUM" {% if task.priority == 'MEDIUM' %}selected{% endif %}>Medium</option>
+          <option value="HIGH" {% if task.priority == 'HIGH' %}selected{% endif %}>High</option>
+          <option value="CRITICAL" {% if task.priority == 'CRITICAL' %}selected{% endif %}>Critical</option>
+        </select></div>
+      <div><label>Deadline</label><input type="date" name="deadline" value="{{ task.deadline|date:'Y-m-d'|default:'' }}"></div>
+    </div>
+    <label>Labels</label>
+    <div class="row">
+      {% for l in labels %}
+        <label style="display:flex;gap:5px;align-items:center;font-weight:400;font-size:13px">
+          <input type="checkbox" name="labels" value="{{ l.pk }}" style="width:auto"
+            {% if task and l in task.labels.all %}checked{% endif %}> {{ l.name }}</label>
+      {% endfor %}
+    </div>
+    <button class="btn" style="margin-top:16px">{% if task %}Save Changes{% else %}Create Task{% endif %}</button>
+  </form>
+</div>
+{% endblock %}

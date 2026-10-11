@@ -1,0 +1,27 @@
+{% extends 'accounts/base.html' %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="row between">
+  <h1>Manage Users</h1>
+  <a class="btn" href="{% url 'user_create' %}">+ Add User</a>
+</div>
+<table style="margin-top:16px">
+  <tr><th>Email</th><th>Name</th><th>Role</th><th>Status</th><th></th></tr>
+  {% for u in users %}
+  <tr>
+    <td>{{ u.email }}</td>
+    <td>{{ u.get_full_name|default:u.username }}</td>
+    <td><span class="badge b-{% if u.role == 'ADMIN' %}admin{% elif u.role == 'PROJECT_MANAGER' %}pm{% else %}dev{% endif %}">{{ u.get_role_display }}</span></td>
+    <td>{% if u.is_active %}<span class="badge b-COMPLETED">Active</span>{% else %}<span class="badge b-CRITICAL">Deactivated</span>{% endif %}</td>
+    <td>
+      {% if u != user %}
+      <form method="post" action="{% url 'user_toggle' u.pk %}">{% csrf_token %}
+        <button class="btn btn-sm {% if u.is_active %}btn-danger{% else %}btn-green{% endif %}">
+          {% if u.is_active %}Deactivate{% else %}Activate{% endif %}</button>
+      </form>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

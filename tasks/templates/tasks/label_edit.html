@@ -1,0 +1,16 @@
+{% extends 'accounts/base.html' %}
+{% block title %}Edit Label{% endblock %}
+{% block content %}
+<div class="card" style="max-width:560px">
+  <h1>Edit Label</h1>
+  <form method="post" class="stack">
+    {% csrf_token %}
+    <label>Name</label>
+    <input name="name" value="{{ label.name }}" required>
+    <label>Color</label>
+    <input type="color" name="color" value="{{ label.color }}">
+    <button class="btn" style="margin-top:16px">Save Changes</button>
+    <a href="{% url 'label_list' %}" class="muted">Cancel</a>
+  </form>
+</div>
+{% endblock %}

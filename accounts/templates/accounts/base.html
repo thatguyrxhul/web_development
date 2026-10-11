@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}DevBoard{% endblock %} | DevBoard</title>
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+<nav>
+  <a class="brand" href="{% url 'home' %}">DevBoard</a>
+  <div class="links">
+    {% if user.is_authenticated %}
+      <a href="{% url 'project_list' %}">Projects</a>
+      <a href="{% url 'my_tasks' %}">My Tasks</a>
+      {% if user.role == 'PROJECT_MANAGER' or user.role == 'ADMIN' %}
+        <a href="{% url 'project_create' %}">+ New Project</a>
+      {% endif %}
+      {% if user.role == 'PROJECT_MANAGER' or user.role == 'ADMIN' %}
+        <a href="{% url 'label_list' %}">Labels</a>
+      {% endif %}
+      {% if user.role == 'ADMIN' %}
+        <a href="{% url 'admin_dashboard' %}">Dashboard</a>
+        <a href="{% url 'user_list' %}">Users</a>
+      {% endif %}
+      <span class="role">{{ user.get_role_display }}</span>
+      <a href="{% url 'logout' %}">Logout</a>
+    {% else %}
+      <a href="{% url 'login' %}">Login</a>
+    {% endif %}
+  </div>
+</nav>
+<div class="container">
+  {% if messages %}
+    <ul class="messages">
+      {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
+    </ul>
+  {% endif %}
+  {% block content %}{% endblock %}
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>
