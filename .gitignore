@@ -4,3 +4,6 @@ __pycache__/
 db.sqlite3
 media/
 .env
+staticfiles/
+*.log
+.DS_Store
