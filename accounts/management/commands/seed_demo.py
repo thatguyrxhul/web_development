@@ -50,7 +50,7 @@ class Command(BaseCommand):
             return user
 
         rahul = ensure_user('rahul', 'rahul@gmail.com', 'rahul@123', 'ADMIN',
-                            'Rahul', 'Sharma', superuser=True)
+                            'Rahul', 'Raj', superuser=True)
         martin = ensure_user('martin', 'martin@test.com', 'martin@123', 'PROJECT_MANAGER',
                              'martin', 'william')
         priya = ensure_user('priya', 'priya@test.com', 'priya@123', 'PROJECT_MANAGER',
