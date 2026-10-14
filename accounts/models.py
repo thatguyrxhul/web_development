@@ -16,3 +16,7 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.email} ({self.get_role_display()})"
+
+    @property
+    def display_name(self):
+        return self.get_full_name() or self.username or self.email

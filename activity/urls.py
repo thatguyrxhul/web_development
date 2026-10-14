@@ -19,4 +19,5 @@ from . import views
 
 urlpatterns = [
     path('projects/<int:pk>/activity/', views.project_activity, name='project_activity'),
+    path('api/activity/', views.activity_feed, name='activity_feed'),
 ]

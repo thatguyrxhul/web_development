@@ -17,12 +17,22 @@ VALID_NEXT = {'TODO': 'IN_PROGRESS', 'IN_PROGRESS': 'IN_REVIEW', 'IN_REVIEW': 'C
 
 @login_required
 def my_tasks(request):
-    tasks = Task.objects.filter(assignee=request.user).select_related('project')
+    role = request.user.role
+    if role == 'ADMIN':
+        tasks = Task.objects.all()
+    elif role == 'PROJECT_MANAGER':
+        tasks = Task.objects.filter(project__manager=request.user)
+    else:
+        tasks = tasks = Task.objects.filter(assignee=request.user)
+    tasks = tasks.select_related('project')
     context = {
         'tasks': tasks,
+        'is_all': role != 'DEVELOPER',
+        'mine': tasks.filter(assignee=request.user).count(),
         'assigned': tasks.count(),
         'completed': tasks.filter(status='COMPLETED').count(),
         'overdue': tasks.filter(deadline__lt=timezone.now().date()).exclude(status='COMPLETED').count(),
+        'today': timezone.localdate(),
     }
     return render(request, 'tasks/my_tasks.html', context)
 
@@ -94,7 +104,7 @@ def task_edit(request, pk):
         task.deadline = request.POST.get('deadline') or None
         task.save()
         for label_id in request.POST.getlist('labels'):
-            TaskLabel.objects.get_or_create(task=task, label_id=label_id)
+            task.labels.set(request.POST.getlist('labels'))
         return redirect('task_detail', pk=task.pk)
     context = {
         'task': task,
