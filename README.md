@@ -240,7 +240,7 @@ devboard/
 
 ## Live deployment
 
-`<live-url-after-render-deploy>`
+`https://devboard-eez9.onrender.com/`
 
 ## AI usage policy
 
