@@ -18,8 +18,8 @@ class Command(BaseCommand):
         def ago(days):
             return now - timedelta(days=days)
 
-        # --- Users -------------------------------------------------------
-        def ensure_user(username, email, password, role, first, last):
+        # --- Users (create if missing; heal names/role/superuser in place) ---
+        def ensure_user(username, email, password, role, first, last, superuser=False):
             user, created = User.objects.get_or_create(
                 email=email,
                 defaults={
@@ -27,24 +27,47 @@ class Command(BaseCommand):
                     'role': role,
                     'first_name': first,
                     'last_name': last,
+                    'is_staff': superuser,
+                    'is_superuser': superuser,
                 },
             )
             if created:
                 user.set_password(password)
                 user.save()
+            else:
+                changed = []
+                if (user.first_name, user.last_name) != (first, last):
+                    user.first_name, user.last_name = first, last
+                    changed += ['first_name', 'last_name']
+                if user.role != role:
+                    user.role = role
+                    changed.append('role')
+                if superuser and not (user.is_superuser and user.is_staff):
+                    user.is_superuser = user.is_staff = True
+                    changed += ['is_superuser', 'is_staff']
+                if changed:
+                    user.save(update_fields=changed)
             return user
 
-        rahul = ensure_user('rahul', 'rahul@gmail.com', 'rahul@123', 'ADMIN', 'Rahul', 'Sharma')
-        martin = ensure_user('martin', 'martin@test.com', 'martin@123', 'PROJECT_MANAGER', 'Martin', 'Rao')
-        priya = ensure_user('priya', 'priya@test.com', 'priya@123', 'PROJECT_MANAGER', 'Priya', 'Nair')
-        arjun = ensure_user('arjun', 'arjun@test.com', 'arjun@123', 'DEVELOPER', 'Arjun', 'Mehta')
-        sneha = ensure_user('sneha', 'sneha@test.com', 'sneha@123', 'DEVELOPER', 'Sneha', 'Iyer')
+        rahul = ensure_user('rahul', 'rahul@gmail.com', 'rahul@123', 'ADMIN',
+                            'Rahul', 'Sharma', superuser=True)
+        martin = ensure_user('martin', 'martin@test.com', 'martin@123', 'PROJECT_MANAGER',
+                             'martin', 'william')
+        priya = ensure_user('priya', 'priya@test.com', 'priya@123', 'PROJECT_MANAGER',
+                            'priya', 'roy')
+        arjun = ensure_user('arjun', 'arjun@test.com', 'arjun@123', 'DEVELOPER',
+                            'arjun', 'c')
+        sneha = ensure_user('sneha', 'sneha@test.com', 'sneha@123', 'DEVELOPER',
+                            'sneha', 'k')
 
-        # --- Labels (the 6 required by the brief) ------------------------
+        # --- Labels (the 6 required by the brief, original colors) ---
         labels = {}
-        for name, color in [('Bug', '#ef4444'), ('Feature', '#10b981'), ('UI', '#3b82f6'),
-                            ('Backend', '#8b5cf6'), ('Database', '#f59e0b'), ('Security', '#64748b')]:
+        for name, color in [('Bug', '#dc2626'), ('Feature', '#2563eb'), ('UI', '#9333ea'),
+                            ('Backend', '#16a34a'), ('Database', '#d97706'), ('Security', '#334155')]:
             label, _ = Label.objects.get_or_create(name=name, defaults={'color': color})
+            if label.color != color:
+                label.color = color
+                label.save(update_fields=['color'])
             labels[name] = label
 
         # --- Projects & members ------------------------------------------
