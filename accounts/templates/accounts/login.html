@@ -1,18 +1,38 @@
 {% extends 'accounts/base.html' %}
 {% block title %}Login{% endblock %}
-{% block content %}
-<div class="login-wrap">
-  <div class="card login-box">
-    <h1>Welcome back</h1>
-    <p class="muted">Sign in to DevBoard</p>
-    <form method="post" class="stack">
-      {% csrf_token %}
-      <label>Email</label>
-      <input type="email" name="email" required autofocus>
-      <label>Password</label>
-      <input type="password" name="password" required>
-      <button class="btn" style="margin-top:16px;width:100%">Login</button>
-    </form>
+{% block body_class %}login-body{% endblock %}
+{% block shell %}
+<div class="login-split">
+  <div class="login-visual">
+    <div class="login-badge">
+      <span class="lb-icon">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </span>
+      <span class="lb-text"><strong>Team Login</strong><small>Projects, tasks, kanban &amp; more…</small></span>
+    </div>
+    <div class="login-visual-foot">
+      <span class="login-copy">© DevBoard 2026</span>
+    </div>
+  </div>
+  <div class="login-form">
+    <div class="login-main">
+      <h1>Welcome, login to<br>your account.</h1>
+      <form method="post">
+        {% csrf_token %}
+        <label for="email">Username or Email Address:</label>
+        <input id="email" type="email" name="email" placeholder="name@domain.com" required autofocus>
+        <label for="password">Password:</label>
+        <input id="password" type="password" name="password" placeholder="Your password" required>
+        <div class="login-actions">
+          <button class="btn login-btn">Sign In Here</button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
+{% if messages %}
+  <ul class="messages">
+    {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
+  </ul>
+{% endif %}
 {% endblock %}

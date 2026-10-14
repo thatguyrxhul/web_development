@@ -1,8 +1,9 @@
 {% extends 'accounts/base.html' %}
 {% block title %}Kanban — {{ project.name }}{% endblock %}
+{% block page_title %}Kanban{% endblock %}
 {% block content %}
 <div class="row between">
-  <h1>{{ project.name }} — Kanban</h1>
+  <h2>{{ project.name }} — Kanban</h2>
   <div class="row">
     <a class="btn btn-secondary" href="{% url 'project_detail' project.pk %}">Project</a>
     {% if user == project.manager or user.role == 'ADMIN' %}
@@ -20,7 +21,7 @@
     <div class="kanban-card" draggable="true" data-task-id="{{ t.pk }}" data-url="{% url 'task_status' t.pk %}">
       <div class="t"><a href="{% url 'task_detail' t.pk %}">{{ t.title }}</a></div>
       <span class="badge b-{{ t.priority }}">{{ t.get_priority_display }}</span>
-      <span class="muted" style="font-size:11px">{{ t.assignee.email|default:'unassigned' }}</span>
+      <span class="muted" style="font-size:11px">{{ t.assignee.display_name|default:'unassigned' }}</span>
     </div>
     {% empty %}<p class="muted" style="font-size:12px">No tasks</p>{% endfor %}
   </div>

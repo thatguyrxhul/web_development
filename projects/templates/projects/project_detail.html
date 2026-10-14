@@ -1,14 +1,15 @@
 {% extends 'accounts/base.html' %}
 {% block title %}{{ project.name }}{% endblock %}
+{% block page_title %}Project{% endblock %}
 {% block content %}
 <div class="row between">
   <div>
-    <h1>{{ project.name }}
+    <h2>{{ project.name }}
       <span class="badge b-{{ project.status }}">{{ project.get_status_display }}</span>
       <span class="badge b-{{ project.priority }}">{{ project.get_priority_display }}</span>
       {% if project.is_archived %}<span class="badge b-LOW">ARCHIVED</span>{% endif %}
-    </h1>
-    <p class="muted">Manager: {{ project.manager.email }} · {{ project.start_date|date:'M d, Y' }} → {{ project.deadline|date:'M d, Y' }}</p>
+      </h2>
+    <p class="muted">Manager: {{ project.manager.display_name }} · {{ project.start_date|date:'M d, Y' }} → {{ project.deadline|date:'M d, Y' }}</p>
   </div>
   <div class="row">
     <a class="btn btn-secondary" href="{% url 'kanban' project.pk %}">Kanban Board</a>
@@ -66,7 +67,7 @@
   {% for t in tasks %}
   <tr>
     <td><a href="{% url 'task_detail' t.pk %}">{{ t.title }}</a></td>
-    <td>{{ t.assignee.email|default:'—' }}</td>
+    <td>{{ t.assignee.display_name|default:'—' }}</td>
     <td><span class="badge b-{{ t.priority }}">{{ t.get_priority_display }}</span></td>
     <td><span class="badge b-{{ t.status }}">{{ t.get_status_display }}</span></td>
     <td>{{ t.deadline|date:'M d, Y'|default:'—' }}</td>

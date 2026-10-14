@@ -1,28 +1,31 @@
 {% extends 'accounts/base.html' %}
 {% block title %}Add User{% endblock %}
+{% block page_title %}Add User{% endblock %}
 {% block content %}
-<div class="card" style="max-width:560px">
-  <h1>Add User</h1>
+<div class="card">
   <form method="post" class="stack">
     {% csrf_token %}
-    <label>Email</label>
-    <input type="email" name="email" required>
-    <label>Username</label>
-    <input name="username" placeholder="optional — defaults from email">
+    <div class="grid grid-2">
+      <div><label>Email</label><input type="email" name="email" required></div>
+      <div><label>Username</label><input name="username" placeholder="optional — defaults from email"></div>
+    </div>
     <div class="grid grid-2">
       <div><label>First name</label><input name="first_name"></div>
       <div><label>Last name</label><input name="last_name"></div>
     </div>
-    <label>Password</label>
-    <input type="password" name="password" required>
-    <label>Role</label>
-    <select name="role" required>
-      <option value="DEVELOPER">Developer</option>
-      <option value="PROJECT_MANAGER">Project Manager</option>
-      <option value="ADMIN">Administrator</option>
-    </select>
-    <button class="btn" style="margin-top:16px">Create User</button>
-    <a href="{% url 'user_list' %}" class="muted">Cancel</a>
+    <div class="grid grid-2">
+      <div><label>Password</label><input type="password" name="password" required></div>
+      <div><label>Role</label>
+        <select name="role" required>
+          <option value="DEVELOPER">Developer</option>
+          <option value="PROJECT_MANAGER">Project Manager</option>
+          <option value="ADMIN">Administrator</option>
+        </select></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn">Create User</button>
+      <a href="{% url 'user_list' %}" class="muted">Cancel</a>
+    </div>
   </form>
 </div>
 {% endblock %}

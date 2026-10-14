@@ -1,0 +1,181 @@
+{% extends 'accounts/base.html' %}
+{% block title %}Overview{% endblock %}
+{% block page_title %}Overview{% endblock %}
+{% block content %}
+
+<div class="dash-grid">
+  <div class="dash-col">
+    <div class="hero-card">
+      <div class="hero-top">
+        <div>
+          <div class="hero-num">{{ open_tasks }}</div>
+          <div class="hero-lbl">Open tasks {% if is_dev %}assigned to you{% else %}across your projects{% endif %}</div>
+        </div>
+        <span class="hero-chip">{{ completed_tasks }} done</span>
+      </div>
+      {% if not is_dev %}<a class="btn btn-onblack hero-btn" href="{% url 'project_create' %}">+ New Project</a>{% endif %}
+    </div>
+
+    <div>
+      <div class="sec-head">
+        <h2>{% if is_dev %}My Tasks{% else %}Your Projects{% endif %}</h2>
+                <a class="btn btn-sm btn-secondary" href="{% url 'my_tasks' %}">View all</a>
+      </div>
+      <div class="table-card">
+        <table>
+          <tr><th>Name</th><th>Status</th><th>Deadline</th><th>{% if is_dev %}Priority{% else %}Progress{% endif %}</th></tr>
+          {% if is_dev %}
+            {% for t in tasks %}
+            <tr>
+              <td><div class="name-cell"><span class="tile">{{ t.title|slice:':1'|upper }}</span>
+                <div><a href="{% url 'task_detail' t.pk %}"><strong>{{ t.title }}</strong></a>
+                <div class="muted">{{ t.project.name }}</div></div></div></td>
+              <td><span class="badge b-{{ t.status }}">{{ t.get_status_display }}</span></td>
+              <td>{{ t.deadline|date:'M d, Y'|default:'—' }}</td>
+              <td><span class="badge b-{{ t.priority }}">{{ t.get_priority_display }}</span></td>
+            </tr>
+            {% empty %}<tr><td colspan="4" class="muted">No open tasks — nice work.</td></tr>{% endfor %}
+          {% else %}
+            {% for p in projects %}
+            <tr>
+              <td><div class="name-cell"><span class="tile">{{ p.name|slice:':1'|upper }}</span>
+                <div><a href="{% url 'project_detail' p.pk %}"><strong>{{ p.name }}</strong></a>
+                <div class="muted">{{ p.manager.display_name }}</div></div></div></td>
+              <td><span class="badge b-{{ p.status }}">{{ p.get_status_display }}</span></td>
+              <td>{{ p.deadline|date:'M d, Y' }}</td>
+              <td>{{ p.done_tasks }}/{{ p.total_tasks }}</td>
+            </tr>
+            {% empty %}<tr><td colspan="4" class="muted">No projects yet.</td></tr>{% endfor %}
+          {% endif %}
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-col">
+    <div class="chart-card">
+      <div class="chart-head">
+        <div class="chart-tabs">
+          <button class="on" data-set="created" type="button">Created</button>
+          <button data-set="completed" type="button">Completed</button>
+        </div>
+      </div>
+      <div class="chart-body">
+        {{ chart_labels|json_script:"chLabels" }}
+        {{ chart_vals|json_script:"chVals" }}
+        {{ done_labels|json_script:"dnLabels" }}
+        {{ done_vals|json_script:"dnVals" }}
+        <div class="ch-tip"></div>
+        <svg class="chart-svg" viewBox="0 0 560 200" preserveAspectRatio="none">
+          <path class="ch-area" fill="#f1f1f1" d=""/>
+          <path class="ch-line" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" vector-effect="non-scaling-stroke" d=""/>
+        </svg>
+        <span class="ch-dot"></span>
+        <div class="x-labels" id="xLabels"></div>
+      </div>
+    </div>
+
+    <div class="exp-row">
+      <div class="exp-card">
+        <span class="exp-ico"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg></span>
+        <div class="exp-name">Active projects</div>
+        <div class="exp-num">{{ active_projects }}</div>
+        <div class="exp-sub">{{ total_projects }} total</div>
+      </div>
+      <div class="exp-card exp-mint">
+        <span class="exp-ico"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L19 7"/></svg></span>
+        <div class="exp-name">Completed</div>
+        <div class="exp-num">{{ completed_tasks }}</div>
+        <div class="exp-sub">tasks closed</div>
+      </div>
+      <div class="exp-card exp-cream">
+        <span class="exp-ico"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+        <div class="exp-name">In progress</div>
+        <div class="exp-num">{{ open_tasks }}</div>
+        <div class="exp-sub">still moving</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  var body=document.querySelector('.chart-body'); if(!body) return;
+  var line=body.querySelector('.ch-line'), area=body.querySelector('.ch-area'),
+      dot=body.querySelector('.ch-dot'), tip=body.querySelector('.ch-tip'),
+      svg=body.querySelector('.chart-svg'),
+      xbox=document.getElementById('xLabels');
+  var sets={
+    created:{labels:JSON.parse(document.getElementById('chLabels').textContent),
+             vals:JSON.parse(document.getElementById('chVals').textContent)},
+    completed:{labels:JSON.parse(document.getElementById('dnLabels').textContent),
+               vals:JSON.parse(document.getElementById('dnVals').textContent)}
+  };
+  var tabs=document.querySelectorAll('.chart-tabs button');
+  var cur='created', n=0, xs=[], points=[], labels=[], vals=[];
+
+  function toPath(p){
+    var d='M'+p[0][0]+','+p[0][1];
+    for(var i=0;i<p.length-1;i++){
+      var p0=p[i-1]||p[i], p1=p[i], p2=p[i+1], p3=p[i+2]||p2;
+      var c1x=p1[0]+(p2[0]-p0[0])/6, c1y=p1[1]+(p2[1]-p0[1])/6;
+      var c2x=p2[0]-(p3[0]-p1[0])/6, c2y=p2[1]-(p3[1]-p1[1])/6;
+      d+=' C'+c1x+','+c1y+' '+c2x+','+c2y+' '+p2[0]+','+p2[1];
+    }
+    return d;
+  }
+
+  function build(){
+    var set=sets[cur];
+    labels=set.labels; vals=set.vals; n=vals.length;
+    xs=[]; points=[];
+    var vmax=Math.max.apply(null, vals)||1;
+    for(var i=0;i<n;i++){
+      xs.push(n>1 ? 30+i*(500/(n-1)) : 280);
+      points.push([xs[i], 180-vals[i]/vmax*140]);
+    }
+    var step = n>7 ? Math.ceil(n/7) : 1, html='';
+    for(var i=0;i<n;i++){
+      if(i%step===0 || i===n-1) html+='<span style="left:'+(xs[i]/560*100)+'%">'+labels[i]+'</span>';
+    }
+    xbox.innerHTML=html;
+  }
+
+  function render(i){
+    dot.style.display='block';
+    tip.style.display='block';
+    var x=xs[i], y=points[i][1];
+    line.setAttribute('d', toPath(points));
+    area.setAttribute('d', toPath(points)+' L'+xs[n-1]+',195 L'+xs[0]+',195 Z');
+    dot.style.left=(x/560*100)+'%';
+    dot.style.top=(26+y/200*190)+'px';
+    tip.style.left=(x/560*100)+'%';
+    tip.style.top=(26+y/200*190-32)+'px';
+    tip.textContent=labels[i]+' · '+vals[i]+' '+(cur==='created'?'created':'completed');
+  }
+
+  function hide(){ dot.style.display='none'; tip.style.display='none'; }
+
+  body.addEventListener('mousemove',function(e){
+    var r=svg.getBoundingClientRect();
+    var vx=(e.clientX-r.left)/r.width*560, best=0, bd=1e9;
+    for(var i=0;i<xs.length;i++){var d=Math.abs(xs[i]-vx); if(d<bd){bd=d;best=i;}}
+    render(best);
+  });
+  body.addEventListener('mouseleave',hide);
+
+  for(var t=0;t<tabs.length;t++){
+    tabs[t].addEventListener('click',function(){
+      for(var j=0;j<tabs.length;j++) tabs[j].classList.remove('on');
+      this.classList.add('on');
+      cur=this.getAttribute('data-set');
+      build(); render(n-1); hide();
+    });
+  }
+
+  build(); render(n-1); hide();
+})();
+</script>
+{% endblock %}

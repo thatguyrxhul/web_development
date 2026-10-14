@@ -1,11 +1,12 @@
 {% extends 'accounts/base.html' %}
 {% block title %}{{ task.title }}{% endblock %}
+{% block page_title %}Task{% endblock %}
 {% block content %}
 <div class="row between">
   <div>
-    <h1>{{ task.title }}</h1>
+    <h2>{{ task.title }}</h2>
     <p class="muted">Project: <a href="{% url 'project_detail' task.project.pk %}">{{ task.project.name }}</a>
-      · Assigned to: {{ task.assignee.email|default:'Unassigned' }}
+      · Assigned to: {{ task.assignee.display_name|default:'Unassigned' }}
       · Deadline: {{ task.deadline|date:'M d, Y'|default:'None' }}</p>
     <p style="margin-top:8px">
       <span class="badge b-{{ task.status }}">{{ task.get_status_display }}</span>
@@ -39,7 +40,7 @@
     <h3>Comments</h3>
     {% for c in comments %}
       <div class="log"><span class="time">{{ c.created_at|date:'M d, H:i' }}</span>
-        <span><strong>{{ c.author.email }}</strong><br>{{ c.body }}</span></div>
+        <span><strong>{{ c.author.display_name }}</strong><br>{{ c.body }}</span></div>
     {% empty %}<p class="muted">No comments yet.</p>{% endfor %}
     <form method="post" action="{% url 'comment_add' task.pk %}" class="stack" style="margin-top:10px">
       {% csrf_token %}
@@ -51,7 +52,7 @@
     <h3>Attachments</h3>
     {% for a in attachments %}
       <div class="log"><a href="{% url 'attachment_download' a.pk %}">{{ a.file.name }}</a>
-        <span class="time">{{ a.uploaded_by.email }} · {{ a.uploaded_at|date:'M d' }}</span></div>
+        <span class="time">{{ a.uploaded_by.display_name }} · {{ a.uploaded_at|date:'M d' }}</span></div>
     {% empty %}<p class="muted">No attachments yet.</p>{% endfor %}
     <form method="post" action="{% url 'attachment_upload' task.pk %}" enctype="multipart/form-data" class="stack" style="margin-top:10px">
       {% csrf_token %}

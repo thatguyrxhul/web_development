@@ -1,8 +1,8 @@
 {% extends 'accounts/base.html' %}
 {% block title %}Users{% endblock %}
+{% block page_title %}Users{% endblock %}
 {% block content %}
-<div class="row between">
-  <h1>Manage Users</h1>
+<div style="display:flex;justify-content:flex-end">
   <a class="btn" href="{% url 'user_create' %}">+ Add User</a>
 </div>
 <table style="margin-top:16px">

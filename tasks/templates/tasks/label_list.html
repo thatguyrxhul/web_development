@@ -1,12 +1,12 @@
 {% extends 'accounts/base.html' %}
 {% block title %}Labels{% endblock %}
+{% block page_title %}Labels{% endblock %}
 {% block content %}
-<h1>Task Labels</h1>
 <div class="card" style="max-width:640px">
   <form method="post" class="row">
     {% csrf_token %}
     <input name="name" placeholder="Label name (e.g. Bug)" required style="max-width:300px">
-    <input type="color" name="color" value="#6b7280" style="width:46px;height:38px;padding:4px" title="Pick a color">
+    <input type="color" name="color" value="#6b7280" class="color-pick" title="Pick a color">
     <button class="btn btn-sm">Add Label</button>
   </form>
 </div>
@@ -20,7 +20,7 @@
     <td class="row">
       <a class="btn btn-sm btn-secondary" href="{% url 'label_edit' l.pk %}">Edit</a>
       <form method="post" action="{% url 'label_delete' l.pk %}"
-            onsubmit="return confirm('Delete label {{ l.name }}? Tasks using it will lose this tag.');">
+            onsubmit="return confirm('Delete label {{ l.name|escapejs }}? Tasks using it will lose this tag.');">
         {% csrf_token %}
         <button class="btn btn-sm btn-danger">Delete</button>
       </form>

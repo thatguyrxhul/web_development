@@ -3,11 +3,13 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
-
-from .models import User
+from django.db.models import Count, Q
+from datetime import timedelta
+from django.utils import timezone
 from projects.models import Project
 from tasks.models import Task
 from activity.models import ActivityLog
+from .models import User
 
 
 def login_view(request):
@@ -27,25 +29,66 @@ def logout_view(request):
 
 @login_required
 def home(request):
-    if request.user.role == 'ADMIN':
-        return redirect('admin_dashboard')
-    if request.user.role == 'PROJECT_MANAGER':
-        return redirect('project_list')
-    return redirect('my_tasks')
+    user = request.user
+    def annotated(qs):
+        return qs.annotate(
+            total_tasks=Count('tasks', distinct=True),
+            done_tasks=Count('tasks', filter=Q(tasks__status='COMPLETED'), distinct=True),
+        )
+    if user.role == 'DEVELOPER':
+        projects = annotated(Project.objects.filter(memberships__user=user).distinct())
+        my_tasks = Task.objects.filter(assignee=user).select_related('project')
+    elif user.role == 'PROJECT_MANAGER':
+        projects = annotated(Project.objects.filter(manager=user))
+        my_tasks = Task.objects.filter(project__manager=user).select_related('project')
+    else:
+        projects = annotated(Project.objects.all())
+        my_tasks = Task.objects.all().select_related('project')
+    completed = my_tasks.filter(status='COMPLETED').count()
+    created = list(my_tasks.order_by('created_at').values_list('created_at', flat=True))
+    done_qs = list(my_tasks.filter(status='COMPLETED').order_by('created_at'))
+    comp = {t.id: t.created_at for t in done_qs}
+    if comp:
+        for k, v in ActivityLog.objects.filter(
+            task_id__in=comp, action='TASK_STATUS_CHANGED', new_value='COMPLETED'
+        ).order_by('timestamp').values_list('task_id', 'timestamp'):
+            comp[k] = v
+    done_times = sorted(comp.values())
 
+    today = timezone.localdate()
+    days = [today - timedelta(days=9 - i) for i in range(10)]
 
-@login_required
-def admin_dashboard(request):
-    if request.user.role != 'ADMIN':
-        raise PermissionDenied
+    def series(times):
+        counts = {}
+        for t in times:
+            d = t.date()
+            counts[d] = counts.get(d, 0) + 1
+        run = sum(1 for t in times if t.date() < days[0])
+        vals = []
+        for d in days:
+            run += counts.get(d, 0)
+            vals.append(run)
+        return [d.strftime('%b %d') for d in days], vals
+
+    chart_labels, chart_vals = series(created)
+    done_labels, done_vals = series(done_times)
+
     context = {
-        'total_users': User.objects.count(),
-        'total_projects': Project.objects.count(),
-        'total_tasks': Task.objects.count(),
-        'completed_tasks': Task.objects.filter(status='COMPLETED').count(),
-        'recent_activity': ActivityLog.objects.select_related('actor')[:10],
+        'open_tasks': my_tasks.count() - completed,
+        'completed_tasks': completed,
+        'active_projects': projects.filter(is_archived=False).count(),
+        'total_projects': projects.count(),
+        'projects': projects[:6],
+        'tasks': my_tasks.exclude(status='COMPLETED')[:6],
+        'is_dev': user.role == 'DEVELOPER',
+        'chart_labels': chart_labels,
+        'chart_vals': chart_vals,
+        'done_labels': done_labels,
+        'done_vals': done_vals,
     }
-    return render(request, 'accounts/admin_dashboard.html', context)
+    return render(request, 'accounts/dashboard.html', context)
+
+
 
 
 @login_required

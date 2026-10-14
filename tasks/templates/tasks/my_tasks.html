@@ -1,24 +1,49 @@
 {% extends 'accounts/base.html' %}
-{% block title %}My Tasks{% endblock %}
+{% block title %}{% if is_all %}All Tasks{% else %}My Tasks{% endif %}{% endblock %}
+{% block page_title %}{% if is_all %}All Tasks{% else %}My Tasks{% endif %}{% endblock %}
 {% block content %}
-<h1>My Dashboard</h1>
-<div class="stats" style="margin:16px 0">
-  <div class="stat"><div class="num">{{ assigned }}</div><div class="lbl">Assigned</div></div>
-  <div class="stat"><div class="num">{{ completed }}</div><div class="lbl">Completed</div></div>
-  <div class="stat"><div class="num">{{ overdue }}</div><div class="lbl">Overdue</div></div>
-  <div class="stat"><div class="num">{{ tasks.count }}</div><div class="lbl">Total</div></div>
+
+<div class="asset-row my-stats" style="margin:0 0 22px">
+  <div class="asset-card ac-lav">
+    <div class="ac-top"><span class="ac-num">{% if is_all %}{{ mine }}{% else %}{{ assigned }}{% endif %}</span></div>
+    <div class="ac-lbl">{% if is_all %}Assigned to me{% else %}Assigned{% endif %}</div>
+    <div class="ac-sub">{% if is_all %}Within scope{% else %}To you{% endif %}</div>
+  </div>
+  <div class="asset-card ac-mint">
+    <div class="ac-top"><span class="ac-num">{{ completed }}</span></div>
+    <div class="ac-lbl">Completed</div>
+    <div class="ac-sub">Done</div>
+  </div>
+  <div class="asset-card ac-rose">
+    <div class="ac-top"><span class="ac-num">{{ overdue }}</span></div>
+    <div class="ac-lbl">Overdue</div>
+    <div class="ac-sub">Past deadline</div>
+  </div>
+  <div class="asset-card ac-cream">
+    <div class="ac-top"><span class="ac-num">{{ tasks.count }}</span></div>
+    <div class="ac-lbl">Total</div>
+    <div class="ac-sub">All time</div>
+  </div>
 </div>
-<table>
-  <tr><th>Task</th><th>Project</th><th>Priority</th><th>Status</th><th>Deadline</th></tr>
-  {% for t in tasks %}
-  <tr>
-    <td><a href="{% url 'task_detail' t.pk %}">{{ t.title }}</a></td>
-    <td><a href="{% url 'project_detail' t.project.pk %}">{{ t.project.name }}</a></td>
-    <td><span class="badge b-{{ t.priority }}">{{ t.get_priority_display }}</span></td>
-    <td><span class="badge b-{{ t.status }}">{{ t.get_status_display }}</span></td>
-    <td>{{ t.deadline|date:'M d, Y'|default:'—' }}
-      {% if t.deadline and t.deadline < today and t.status != 'COMPLETED' %}<span class="badge b-CRITICAL">OVERDUE</span>{% endif %}</td>
-  </tr>
-  {% empty %}<tr><td colspan="5" class="muted">No tasks assigned to you yet.</td></tr>{% endfor %}
-</table>
+
+<div class="sec-head">
+  <h2>{% if is_all %}All Tasks{% else %}My Tasks{% endif %}</h2>
+</div>
+
+<div class="table-card">
+  <table>
+    <tr><th>Task</th><th>Project</th><th>Priority</th><th>Status</th><th>Deadline</th></tr>
+    {% for t in tasks %}
+    <tr>
+      <td><div class="name-cell"><span class="tile">{{ t.title|slice:':1'|upper }}</span>
+        <div><a href="{% url 'task_detail' t.pk %}"><strong>{{ t.title }}</strong></a>
+        {% if t.deadline and t.deadline < today and t.status != 'COMPLETED' %}<span class="badge b-OVERDUE" style="margin-left:8px">OVERDUE</span>{% endif %}</div></div></td>
+      <td><a class="muted" href="{% url 'project_detail' t.project.pk %}">{{ t.project.name }}</a></td>
+      <td><span class="badge b-{{ t.priority }}">{{ t.get_priority_display }}</span></td>
+      <td><span class="badge b-{{ t.status }}">{{ t.get_status_display }}</span></td>
+      <td>{{ t.deadline|date:'M d, Y'|default:'—' }}</td>
+    </tr>
+      {% empty %}<tr><td colspan="5" class="muted">No tasks here yet.{% if is_all %} <a class="btn btn-sm btn-secondary" href="{% url 'project_list' %}" style="margin-left:8px">Browse projects</a>{% endif %}</td></tr>{% endfor %}
+  </table>
+</div>
 {% endblock %}
