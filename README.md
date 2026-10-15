@@ -236,7 +236,7 @@ devboard/
 
 ## Screen recording
 
-**Recording:** `<link-to-recording>`
+**Recording:** `https://www.dropbox.com/scl/fi/y4tbvjv78c5rufsucfcns/devboard-demo.mp4?rlkey=qws39tsdmwjlt3y1fwfeu34b9&st=7eug31g0&e=1&dl=0`
 
 ## Live deployment
 
